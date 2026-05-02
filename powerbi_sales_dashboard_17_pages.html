@@ -1,0 +1,912 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.dash-shell { display: flex; height: 580px; background: var(--color-background-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; border: 0.5px solid var(--color-border-tertiary); }
+.sidebar { width: 180px; min-width: 180px; background: var(--color-background-primary); border-right: 0.5px solid var(--color-border-tertiary); display: flex; flex-direction: column; overflow-y: auto; }
+.sidebar-header { padding: 14px 12px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.sidebar-title { font-size: 12px; font-weight: 500; color: var(--color-text-primary); }
+.sidebar-sub { font-size: 10px; color: var(--color-text-secondary); margin-top: 2px; }
+.nav-item { padding: 7px 12px; cursor: pointer; font-size: 11px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 6px; border-left: 2px solid transparent; transition: all 0.1s; }
+.nav-item:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+.nav-item.active { background: #E6F1FB; color: #185FA5; border-left: 2px solid #185FA5; font-weight: 500; }
+.nav-icon { font-size: 12px; width: 14px; text-align: center; }
+.nav-group { font-size: 9px; color: var(--color-text-secondary); padding: 8px 12px 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { height: 40px; background: var(--color-background-primary); border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; padding: 0 16px; gap: 12px; }
+.page-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+.topbar-filters { display: flex; gap: 8px; margin-left: auto; align-items: center; }
+.filter-chip { font-size: 10px; color: var(--color-text-secondary); background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: 999px; padding: 3px 8px; }
+.content { flex: 1; overflow-y: auto; padding: 12px; }
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.kpi-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+.kpi-label { font-size: 10px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.kpi-value { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+.kpi-delta { font-size: 10px; margin-top: 2px; }
+.kpi-delta.pos { color: #3B6D11; }
+.kpi-delta.neg { color: #A32D2D; }
+.kpi-delta.neu { color: var(--color-text-secondary); }
+.chart-row { display: grid; gap: 8px; margin-bottom: 12px; }
+.chart-row-2 { grid-template-columns: 2fr 1fr; }
+.chart-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+.chart-row-equal { grid-template-columns: 1fr 1fr; }
+.chart-box { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+.chart-title { font-size: 11px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 8px; }
+.bar-container { display: flex; flex-direction: column; gap: 5px; }
+.bar-row { display: flex; align-items: center; gap: 6px; }
+.bar-label { font-size: 10px; color: var(--color-text-secondary); width: 60px; text-align: right; flex-shrink: 0; }
+.bar-track { flex: 1; height: 14px; background: var(--color-background-secondary); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; }
+.bar-val { font-size: 10px; color: var(--color-text-secondary); width: 36px; flex-shrink: 0; }
+.blue-fill { background: #378ADD; }
+.green-fill { background: #639922; }
+.amber-fill { background: #EF9F27; }
+.red-fill { background: #E24B4A; }
+.teal-fill { background: #1D9E75; }
+.purple-fill { background: #7F77DD; }
+.mini-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+.mini-table th { font-size: 9px; color: var(--color-text-secondary); font-weight: 500; padding: 4px 6px; border-bottom: 0.5px solid var(--color-border-tertiary); text-align: left; }
+.mini-table td { padding: 4px 6px; color: var(--color-text-primary); border-bottom: 0.5px solid var(--color-border-tertiary); }
+.mini-table tr:last-child td { border-bottom: none; }
+.badge { font-size: 9px; padding: 2px 6px; border-radius: 999px; }
+.badge-success { background: #EAF3DE; color: #3B6D11; }
+.badge-danger { background: #FCEBEB; color: #A32D2D; }
+.badge-warn { background: #FAEEDA; color: #854F0B; }
+.badge-info { background: #E6F1FB; color: #185FA5; }
+.funnel-box { display: flex; flex-direction: column; gap: 3px; }
+.funnel-step { display: flex; align-items: center; gap: 8px; }
+.funnel-bar { height: 20px; border-radius: 3px; display: flex; align-items: center; padding: 0 8px; }
+.funnel-label { font-size: 10px; color: var(--color-text-secondary); width: 80px; flex-shrink: 0; }
+.funnel-val { font-size: 10px; font-weight: 500; }
+.progress-ring { position: relative; display: flex; align-items: center; justify-content: center; }
+.gauge-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.gauge-item { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px; text-align: center; }
+.gauge-pct { font-size: 22px; font-weight: 500; }
+.gauge-label { font-size: 9px; color: var(--color-text-secondary); margin-top: 2px; }
+.gauge-bar { height: 4px; border-radius: 2px; background: var(--color-background-primary); margin-top: 6px; overflow: hidden; }
+.gauge-fill { height: 100%; border-radius: 2px; }
+.timeline-bar { display: flex; align-items: flex-end; gap: 3px; height: 80px; }
+.t-bar { flex: 1; border-radius: 2px 2px 0 0; position: relative; }
+.t-month { font-size: 8px; color: var(--color-text-secondary); text-align: center; margin-top: 3px; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.compare-cell { font-size: 10px; padding: 4px 8px; background: var(--color-background-secondary); border-radius: 4px; }
+.compare-cell .label { color: var(--color-text-secondary); font-size: 9px; }
+.compare-cell .val { font-weight: 500; color: var(--color-text-primary); }
+.compare-cell .delta { font-size: 9px; }
+.leaderboard-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.rank { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); width: 16px; }
+.avatar { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 500; flex-shrink: 0; }
+.av-blue { background: #B5D4F4; color: #0C447C; }
+.av-teal { background: #9FE1CB; color: #085041; }
+.av-amber { background: #FAC775; color: #633806; }
+.av-purple { background: #CECBF6; color: #3C3489; }
+.av-coral { background: #F5C4B3; color: #712B13; }
+.lb-name { font-size: 11px; color: var(--color-text-primary); flex: 1; }
+.lb-val { font-size: 11px; font-weight: 500; color: var(--color-text-primary); }
+.page { display: none; }
+.page.active { display: block; }
+svg text { font-family: var(--font-sans); }
+</style>
+
+<h2 class="sr-only">Power BI Sales Dashboard mockup — 17 หน้า สามารถสลับหน้าได้จาก sidebar ด้านซ้าย</h2>
+
+<div class="dash-shell">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">Sales Dashboard</div>
+      <div class="sidebar-sub">Power BI Model</div>
+    </div>
+    <div class="nav-group">ภาพรวม</div>
+    <div class="nav-item active" onclick="showPage(0,this)"><span class="nav-icon">🎯</span>Actual vs Target</div>
+    <div class="nav-item" onclick="showPage(1,this)"><span class="nav-icon">📊</span>Overall Performance</div>
+    <div class="nav-group">วิเคราะห์</div>
+    <div class="nav-item" onclick="showPage(2,this)"><span class="nav-icon">👥</span>Lead Analysis</div>
+    <div class="nav-item" onclick="showPage(3,this)"><span class="nav-icon">💰</span>Marketing Perf.</div>
+    <div class="nav-item" onclick="showPage(4,this)"><span class="nav-icon">🛍️</span>Product Perf.</div>
+    <div class="nav-group">ติดตาม</div>
+    <div class="nav-item" onclick="showPage(5,this)"><span class="nav-icon">💳</span>ค้างชำระ</div>
+    <div class="nav-item" onclick="showPage(6,this)"><span class="nav-icon">🗓️</span>Target Monthly</div>
+    <div class="nav-item" onclick="showPage(7,this)"><span class="nav-icon">📋</span>ตารางย้อนหลัง</div>
+    <div class="nav-group">เปรียบเทียบ</div>
+    <div class="nav-item" onclick="showPage(8,this)"><span class="nav-icon">⚖️</span>Compare 2 Range</div>
+    <div class="nav-item" onclick="showPage(9,this)"><span class="nav-icon">📉</span>Avg 12 Month</div>
+    <div class="nav-item" onclick="showPage(10,this)"><span class="nav-icon">↩️</span>Last Month</div>
+    <div class="nav-item" onclick="showPage(11,this)"><span class="nav-icon">🔁</span>Last Year</div>
+    <div class="nav-group">ทีม</div>
+    <div class="nav-item" onclick="showPage(12,this)"><span class="nav-icon">💬</span>แชท Facebook</div>
+    <div class="nav-item" onclick="showPage(13,this)"><span class="nav-icon">🏆</span>Leaderboard</div>
+    <div class="nav-group">ข้อมูล</div>
+    <div class="nav-item" onclick="showPage(14,this)"><span class="nav-icon">👤</span>Transaction Lead</div>
+    <div class="nav-item" onclick="showPage(15,this)"><span class="nav-icon">📝</span>Transaction Order</div>
+    <div class="nav-item" onclick="showPage(16,this)"><span class="nav-icon">📚</span>สารบัญสูตร</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="page-title" id="page-title">หน้าที่ 1: Actual vs Target Current Month</span>
+      <div class="topbar-filters">
+        <div class="filter-chip">เม.ย. 2025</div>
+        <div class="filter-chip">All BU</div>
+        <div class="filter-chip">All Salesperson</div>
+      </div>
+    </div>
+    <div class="content" id="main-content">
+
+      <!-- PAGE 0: Actual vs Target -->
+      <div class="page active" id="page-0">
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-label">ยอดขายจริง</div>
+            <div class="kpi-value">฿842K</div>
+            <div class="kpi-delta pos">84.2% จากเป้า ฿1.0M</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">ยังขาดจากเป้า</div>
+            <div class="kpi-value" style="color:#A32D2D">฿158K</div>
+            <div class="kpi-delta neu">เหลือ 8 วัน</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">ปิดการขายใหม่</div>
+            <div class="kpi-value">42</div>
+            <div class="kpi-delta pos">84% / เป้า 50</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Basket Size</div>
+            <div class="kpi-value">฿20K</div>
+            <div class="kpi-delta pos">เป้า ฿19K</div>
+          </div>
+        </div>
+        <div class="chart-row chart-row-2">
+          <div class="chart-box">
+            <div class="chart-title">ยอดขายรายวัน vs เป้ารายวัน</div>
+            <div style="display:flex;align-items:flex-end;gap:4px;height:90px;padding-bottom:4px">
+              <svg width="100%" height="90" viewBox="0 0 420 90" preserveAspectRatio="none">
+                <defs><line/></defs>
+                <!-- target line -->
+                <line x1="0" y1="55" x2="420" y2="55" stroke="#E24B4A" stroke-width="1" stroke-dasharray="4,3" opacity="0.6"/>
+                <!-- bars actual -->
+                <rect x="2" y="68" width="12" height="20" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="18" y="60" width="12" height="28" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="34" y="50" width="12" height="38" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="50" y="72" width="12" height="16" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="66" y="55" width="12" height="33" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="82" y="45" width="12" height="43" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="98" y="62" width="12" height="26" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="114" y="58" width="12" height="30" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="130" y="48" width="12" height="40" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="146" y="70" width="12" height="18" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="162" y="52" width="12" height="36" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="178" y="42" width="12" height="46" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="194" y="65" width="12" height="23" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="210" y="44" width="12" height="44" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="226" y="60" width="12" height="28" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="242" y="47" width="12" height="41" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="258" y="54" width="12" height="34" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="274" y="68" width="12" height="20" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="290" y="40" width="12" height="48" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="306" y="55" width="12" height="33" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="322" y="49" width="12" height="39" rx="2" fill="#378ADD" opacity="0.85"/>
+                <rect x="338" y="63" width="12" height="25" rx="2" fill="#378ADD" opacity="0.85"/>
+                <!-- future bars dimmed -->
+                <rect x="354" y="55" width="12" height="33" rx="2" fill="#B5D4F4" opacity="0.5"/>
+                <rect x="370" y="55" width="12" height="33" rx="2" fill="#B5D4F4" opacity="0.5"/>
+                <rect x="386" y="55" width="12" height="33" rx="2" fill="#B5D4F4" opacity="0.5"/>
+                <text x="420" y="52" font-size="8" fill="#E24B4A" text-anchor="end">เป้ารายวัน</text>
+              </svg>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:4px">
+              <div style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--color-text-secondary)">
+                <div style="width:8px;height:8px;background:#378ADD;border-radius:2px"></div>ทำได้
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--color-text-secondary)">
+                <div style="width:8px;height:8px;background:#B5D4F4;border-radius:2px"></div>วันที่เหลือ
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--color-text-secondary)">
+                <div style="width:12px;height:1px;background:#E24B4A;border-top:1px dashed #E24B4A"></div>เป้า
+              </div>
+            </div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">% Achievement แต่ละ KPI</div>
+            <div class="gauge-row" style="grid-template-columns:1fr 1fr;">
+              <div class="gauge-item">
+                <div class="gauge-pct" style="color:#3B6D11">84%</div>
+                <div class="gauge-label">ยอดขาย</div>
+                <div class="gauge-bar"><div class="gauge-fill green-fill" style="width:84%"></div></div>
+              </div>
+              <div class="gauge-item">
+                <div class="gauge-pct" style="color:#3B6D11">84%</div>
+                <div class="gauge-label">ปิดการขาย</div>
+                <div class="gauge-bar"><div class="gauge-fill green-fill" style="width:84%"></div></div>
+              </div>
+              <div class="gauge-item">
+                <div class="gauge-pct" style="color:#185FA5">105%</div>
+                <div class="gauge-label">Basket Size</div>
+                <div class="gauge-bar"><div class="gauge-fill blue-fill" style="width:100%"></div></div>
+              </div>
+              <div class="gauge-item">
+                <div class="gauge-pct" style="color:#854F0B">71%</div>
+                <div class="gauge-label">Lead (ไม่ Spam)</div>
+                <div class="gauge-bar"><div class="gauge-fill amber-fill" style="width:71%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-row chart-row-3">
+          <div class="chart-box">
+            <div class="chart-title">ยอดขาย New vs Con</div>
+            <div class="bar-container" style="margin-top:4px">
+              <div class="bar-row"><div class="bar-label">ลูกค้าใหม่</div><div class="bar-track"><div class="bar-fill blue-fill" style="width:68%"></div></div><div class="bar-val">฿573K</div></div>
+              <div class="bar-row"><div class="bar-label">ต่อคอร์ส</div><div class="bar-track"><div class="bar-fill teal-fill" style="width:32%"></div></div><div class="bar-val">฿269K</div></div>
+            </div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">ยอดค้างชำระ</div>
+            <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:4px">รวม <span style="font-size:15px;font-weight:500;color:#A32D2D">฿124K</span></div>
+            <div style="font-size:10px;color:var(--color-text-secondary)">สลิปค้าง: <b>18</b> รายการ</div>
+            <div style="font-size:10px;color:var(--color-text-secondary)">เกิน Due Date: <b style="color:#A32D2D">5</b> รายการ</div>
+            <div style="font-size:10px;color:var(--color-text-secondary)">Due 7 วันนี้: <b style="color:#854F0B">8</b> รายการ</div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">Lead vs เป้า</div>
+            <div class="bar-container" style="margin-top:4px">
+              <div class="bar-row"><div class="bar-label">คนทัก</div><div class="bar-track"><div class="bar-fill blue-fill" style="width:71%"></div></div><div class="bar-val">355/500</div></div>
+              <div class="bar-row"><div class="bar-label">จริงจัง</div><div class="bar-track"><div class="bar-fill teal-fill" style="width:80%"></div></div><div class="bar-val">80/100</div></div>
+              <div class="bar-row"><div class="bar-label">คุณภาพ</div><div class="bar-track"><div class="bar-fill green-fill" style="width:90%"></div></div><div class="bar-val">45/50</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE 1: Overall Performance -->
+      <div class="page" id="page-1">
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-label">ยอดขายจริง (YTD)</div><div class="kpi-value">฿4.2M</div><div class="kpi-delta pos">+12% YoY</div></div>
+          <div class="kpi-card"><div class="kpi-label">Lead ทั้งหมด</div><div class="kpi-value">2,840</div><div class="kpi-delta pos">+8% MoM</div></div>
+          <div class="kpi-card"><div class="kpi-label">ROAS</div><div class="kpi-value">9.5x</div><div class="kpi-delta pos">+0.3x MoM</div></div>
+          <div class="kpi-card"><div class="kpi-label">% ปิดจาก Lead</div><div class="kpi-value">5.4%</div><div class="kpi-delta neu">เป้า 6%</div></div>
+        </div>
+        <div class="chart-row chart-row-2">
+          <div class="chart-box">
+            <div class="chart-title">Marketing Funnel</div>
+            <div class="funnel-box">
+              <div class="funnel-step"><div class="funnel-label">Ads Spent</div><div class="funnel-bar blue-fill" style="width:100%;color:#042C53;font-size:10px;font-weight:500">฿100K</div></div>
+              <div class="funnel-step"><div class="funnel-label">Impression</div><div class="funnel-bar blue-fill" style="width:95%;opacity:0.85;color:#042C53;font-size:10px">1M ครั้ง</div></div>
+              <div class="funnel-step"><div class="funnel-label">Reach</div><div class="funnel-bar teal-fill" style="width:80%;color:#04342C;font-size:10px">400K คน</div></div>
+              <div class="funnel-step"><div class="funnel-label">Click</div><div class="funnel-bar teal-fill" style="width:60%;opacity:0.85;color:#04342C;font-size:10px">8K คลิก</div></div>
+              <div class="funnel-step"><div class="funnel-label">Conversation</div><div class="funnel-bar green-fill" style="width:45%;color:#173404;font-size:10px">2K คน</div></div>
+              <div class="funnel-step"><div class="funnel-label">Lead (ไม่ Spam)</div><div class="funnel-bar green-fill" style="width:35%;opacity:0.85;color:#173404;font-size:10px">1.6K คน</div></div>
+              <div class="funnel-step"><div class="funnel-label">Serious Lead</div><div class="funnel-bar amber-fill" style="width:22%;color:#412402;font-size:10px">640 คน</div></div>
+              <div class="funnel-step"><div class="funnel-label">Qualified Lead</div><div class="funnel-bar amber-fill" style="width:15%;opacity:0.85;color:#412402;font-size:10px">380 คน</div></div>
+              <div class="funnel-step"><div class="funnel-label">Closed</div><div class="funnel-bar red-fill" style="width:8%;color:#501313;font-size:10px">86 ราย</div></div>
+            </div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">Sales Funnel (Lead Stage)</div>
+            <div class="funnel-box" style="gap:5px">
+              <div class="funnel-step"><div class="funnel-label">F1 รับรู้</div><div class="funnel-bar blue-fill" style="width:100%;color:#042C53;font-size:10px">420 คน</div></div>
+              <div class="funnel-step"><div class="funnel-label">F2 สนใจ</div><div class="funnel-bar blue-fill" style="width:75%;opacity:0.8;color:#042C53;font-size:10px">315 คน</div></div>
+              <div class="funnel-step"><div class="funnel-label">F3 พิจารณา</div><div class="funnel-bar teal-fill" style="width:55%;color:#04342C;font-size:10px">230 คน</div></div>
+              <div class="funnel-step"><div class="funnel-label">F4 ตัดสินใจ</div><div class="funnel-bar amber-fill" style="width:28%;color:#412402;font-size:10px">118 คน</div></div>
+              <div class="funnel-step"><div class="funnel-label">F5 ปิดขาย</div><div class="funnel-bar green-fill" style="width:14%;color:#173404;font-size:10px">59 ราย</div></div>
+            </div>
+            <div style="margin-top:8px;border-top:0.5px solid var(--color-border-tertiary);padding-top:6px">
+              <div class="chart-title">Top สาเหตุปิดไม่ได้</div>
+              <div class="bar-container">
+                <div class="bar-row"><div class="bar-label">ราคาแพง</div><div class="bar-track"><div class="bar-fill red-fill" style="width:65%"></div></div><div class="bar-val">32%</div></div>
+                <div class="bar-row"><div class="bar-label">ไม่สะดวก</div><div class="bar-track"><div class="bar-fill amber-fill" style="width:40%"></div></div><div class="bar-val">20%</div></div>
+                <div class="bar-row"><div class="bar-label">คู่แข่ง</div><div class="bar-track"><div class="bar-fill amber-fill" style="width:28%"></div></div><div class="bar-val">14%</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE 2: Lead Analysis -->
+      <div class="page" id="page-2">
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-label">คนทักทั้งหมด</div><div class="kpi-value">1,240</div><div class="kpi-delta neu">รวม Spam</div></div>
+          <div class="kpi-card"><div class="kpi-label">Spam</div><div class="kpi-value" style="color:#A32D2D">186</div><div class="kpi-delta neg">15% ของทั้งหมด</div></div>
+          <div class="kpi-card"><div class="kpi-label">คนทักจริงจัง</div><div class="kpi-value">418</div><div class="kpi-delta pos">40% จากคนทักทั้งหมด</div></div>
+          <div class="kpi-card"><div class="kpi-label">คนทักคุณภาพ</div><div class="kpi-value">251</div><div class="kpi-delta pos">24% จากคนทักทั้งหมด</div></div>
+        </div>
+        <div class="chart-row chart-row-2">
+          <div class="chart-box">
+            <div class="chart-title">Lead Quality Funnel</div>
+            <div class="funnel-box">
+              <div class="funnel-step"><div class="funnel-label">คนทักทั้งหมด</div><div class="funnel-bar blue-fill" style="width:100%;color:#042C53;font-size:10px">1,240 คน</div></div>
+              <div class="funnel-step"><div class="funnel-label">ไม่รวม Spam</div><div class="funnel-bar blue-fill" style="width:85%;opacity:0.8;color:#042C53;font-size:10px">1,054 คน</div></div>
+              <div class="funnel-step"><div class="funnel-label">จริงจัง</div><div class="funnel-bar teal-fill" style="width:40%;color:#04342C;font-size:10px">418 คน (40%)</div></div>
+              <div class="funnel-step"><div class="funnel-label">คุณภาพ</div><div class="funnel-bar green-fill" style="width:24%;color:#173404;font-size:10px">251 คน (24%)</div></div>
+              <div class="funnel-step"><div class="funnel-label">จริงจัง+คุณภาพ</div><div class="funnel-bar amber-fill" style="width:18%;color:#412402;font-size:10px">190 คน (18%)</div></div>
+              <div class="funnel-step"><div class="funnel-label">Warm Lead</div><div class="funnel-bar amber-fill" style="width:12%;opacity:0.85;color:#412402;font-size:10px">126 คน</div></div>
+            </div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">ระดับการศึกษา</div>
+            <div class="bar-container">
+              <div class="bar-row"><div class="bar-label">ม.ปลาย</div><div class="bar-track"><div class="bar-fill blue-fill" style="width:40%"></div></div><div class="bar-val">38%</div></div>
+              <div class="bar-row"><div class="bar-label">ม.ต้น</div><div class="bar-track"><div class="bar-fill teal-fill" style="width:28%"></div></div><div class="bar-val">26%</div></div>
+              <div class="bar-row"><div class="bar-label">ป.ต้น</div><div class="bar-track"><div class="bar-fill green-fill" style="width:20%"></div></div><div class="bar-val">18%</div></div>
+              <div class="bar-row"><div class="bar-label">ป.ปลาย</div><div class="bar-track"><div class="bar-fill amber-fill" style="width:18%"></div></div><div class="bar-val">15%</div></div>
+              <div class="bar-row"><div class="bar-label">มหาวิทยาลัย</div><div class="bar-track"><div class="bar-fill purple-fill" style="width:8%"></div></div><div class="bar-val">8%</div></div>
+            </div>
+            <div style="margin-top:8px;border-top:0.5px solid var(--color-border-tertiary);padding-top:6px">
+              <div class="chart-title">Top Pain Point</div>
+              <div class="bar-container">
+                <div class="bar-row"><div class="bar-label">เกรดตก</div><div class="bar-track"><div class="bar-fill red-fill" style="width:60%"></div></div><div class="bar-val">45%</div></div>
+                <div class="bar-row"><div class="bar-label">สอบไม่ติด</div><div class="bar-track"><div class="bar-fill amber-fill" style="width:38%"></div></div><div class="bar-val">28%</div></div>
+                <div class="bar-row"><div class="bar-label">ขาดความมั่นใจ</div><div class="bar-track"><div class="bar-fill teal-fill" style="width:20%"></div></div><div class="bar-val">15%</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-row chart-row-3">
+          <div class="chart-box"><div class="chart-title">% ปิดจาก Lead</div>
+            <div style="font-size:11px;margin-top:4px">จากทั้งหมด: <b style="color:#185FA5">4.2%</b></div>
+            <div style="font-size:11px">จากจริงจัง: <b style="color:#3B6D11">10.5%</b></div>
+            <div style="font-size:11px">จากคุณภาพ: <b style="color:#3B6D11">17.5%</b></div>
+            <div style="font-size:11px">จาก Warm: <b style="color:#854F0B">34.9%</b></div>
+          </div>
+          <div class="chart-box"><div class="chart-title">สาเหตุไม่คุณภาพ</div>
+            <div class="bar-container" style="margin-top:4px">
+              <div class="bar-row"><div class="bar-label">ที่อยู่</div><div class="bar-track"><div class="bar-fill red-fill" style="width:42%"></div></div><div class="bar-val">35%</div></div>
+              <div class="bar-row"><div class="bar-label">อายุ/ระดับ</div><div class="bar-track"><div class="bar-fill amber-fill" style="width:30%"></div></div><div class="bar-val">25%</div></div>
+              <div class="bar-row"><div class="bar-label">กำลังซื้อ</div><div class="bar-track"><div class="bar-fill teal-fill" style="width:24%"></div></div><div class="bar-val">20%</div></div>
+            </div>
+          </div>
+          <div class="chart-box"><div class="chart-title">สาเหตุปิดไม่ได้</div>
+            <div class="bar-container" style="margin-top:4px">
+              <div class="bar-row"><div class="bar-label">ราคาแพง</div><div class="bar-track"><div class="bar-fill red-fill" style="width:65%"></div></div><div class="bar-val">32%</div></div>
+              <div class="bar-row"><div class="bar-label">ไม่สะดวก</div><div class="bar-track"><div class="bar-fill amber-fill" style="width:40%"></div></div><div class="bar-val">20%</div></div>
+              <div class="bar-row"><div class="bar-label">คู่แข่งดีกว่า</div><div class="bar-track"><div class="bar-fill teal-fill" style="width:28%"></div></div><div class="bar-val">14%</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE 3: Marketing Performance -->
+      <div class="page" id="page-3">
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-label">Ads Spent</div><div class="kpi-value">฿100K</div><div class="kpi-delta neu">เดือนนี้</div></div>
+          <div class="kpi-card"><div class="kpi-label">CPL (ไม่รวม Spam)</div><div class="kpi-value">฿95</div><div class="kpi-delta pos">-฿5 MoM</div></div>
+          <div class="kpi-card"><div class="kpi-label">ROAS</div><div class="kpi-value">9.5x</div><div class="kpi-delta pos">+0.3x MoM</div></div>
+          <div class="kpi-card"><div class="kpi-label">% MC</div><div class="kpi-value">10.5%</div><div class="kpi-delta neu">เป้า 10%</div></div>
+        </div>
+        <div class="chart-row chart-row-2">
+          <div class="chart-box">
+            <div class="chart-title">Channel Performance Comparison</div>
+            <table class="mini-table">
+              <thead><tr><th>Channel</th><th>Spent</th><th>Lead</th><th>CPL</th><th>ROAS</th><th>%MC</th></tr></thead>
+              <tbody>
+                <tr><td><b>Facebook Ads</b></td><td>฿50K</td><td>800</td><td>฿63</td><td style="color:#3B6D11">9.6x</td><td>10.4%</td></tr>
+                <tr><td><b>Google Ads</b></td><td>฿30K</td><td>300</td><td>฿100</td><td style="color:#3B6D11">10.0x</td><td>10.0%</td></tr>
+                <tr><td><b>Line Ads</b></td><td>฿20K</td><td>400</td><td style="color:#3B6D11">฿50</td><td style="color:#854F0B">7.5x</td><td style="color:#A32D2D">13.3%</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">Funnel Conversion Rate</div>
+            <div class="bar-container">
+              <div class="bar-row"><div class="bar-label">Reach→Click</div><div class="bar-track"><div class="bar-fill blue-fill" style="width:40%"></div></div><div class="bar-val">2.0%</div></div>
+              <div class="bar-row"><div class="bar-label">Click→Conv.</div><div class="bar-track"><div class="bar-fill teal-fill" style="width:50%"></div></div><div class="bar-val">25%</div></div>
+              <div class="bar-row"><div class="bar-label">Conv.→Lead</div><div class="bar-track"><div class="bar-fill green-fill" style="width:80%"></div></div><div class="bar-val">80%</div></div>
+              <div class="bar-row"><div class="bar-label">Lead→Serious</div><div class="bar-track"><div class="bar-fill amber-fill" style="width:40%"></div></div><div class="bar-val">40%</div></div>
+              <div class="bar-row"><div class="bar-label">Serious→Close</div><div class="bar-track"><div class="bar-fill red-fill" style="width:20%"></div></div><div class="bar-val">10%</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-row chart-row-3">
+          <div class="chart-box"><div class="chart-title">Cost per Lead Type</div>
+            <div style="font-size:11px;margin-top:4px">Lead ทั้งหมด: <b>฿95</b></div>
+            <div style="font-size:11px">จริงจัง: <b>฿156</b></div>
+            <div style="font-size:11px">คุณภาพ: <b>฿263</b></div>
+            <div style="font-size:11px">จริงจัง+คุณภาพ: <b>฿400</b></div>
+            <div style="font-size:11px">CAC (ปิดขาย): <b style="color:#185FA5">฿1,163</b></div>
+          </div>
+          <div class="chart-box"><div class="chart-title">Engagement Metrics</div>
+            <div style="font-size:11px;margin-top:4px">Impression: <b>1,000,000</b></div>
+            <div style="font-size:11px">Reach: <b>400,000</b></div>
+            <div style="font-size:11px">Frequency: <b>2.5x</b></div>
+            <div style="font-size:11px">CTR: <b>2.0%</b></div>
+            <div style="font-size:11px">Engagement Rate: <b>5.0%</b></div>
+          </div>
+          <div class="chart-box"><div class="chart-title">ROI Summary</div>
+            <div class="gauge-item" style="text-align:left;margin-bottom:6px">
+              <div class="gauge-pct" style="color:#3B6D11">9.5x</div>
+              <div class="gauge-label">ROAS (ยอดขายใหม่ ÷ Ads)</div>
+              <div class="gauge-bar"><div class="gauge-fill green-fill" style="width:95%"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE 4: Product Performance -->
+      <div class="page" id="page-4">
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-label">BU ที่ขายดีสุด</div><div class="kpi-value">Math</div><div class="kpi-delta pos">฿320K (38%)</div></div>
+          <div class="kpi-card"><div class="kpi-label">Basket Size สูงสุด</div><div class="kpi-value">฿32K</div><div class="kpi-delta pos">Premium Package</div></div>
+          <div class="kpi-card"><div class="kpi-label">สินค้าที่ขายเร็วสุด</div><div class="kpi-value">12 วัน</div><div class="kpi-delta pos">Avg Lead Time</div></div>
+          <div class="kpi-card"><div class="kpi-label">คอร์สขายดีสุด</div><div class="kpi-value">ม.ปลาย</div><div class="kpi-delta pos">180 ปิด</div></div>
+        </div>
+        <div class="chart-row chart-row-2">
+          <div class="chart-box">
+            <div class="chart-title">ยอดขายแต่ละ BU</div>
+            <div class="bar-container">
+              <div class="bar-row"><div class="bar-label">Math</div><div class="bar-track"><div class="bar-fill blue-fill" style="width:100%"></div></div><div class="bar-val">฿320K</div></div>
+              <div class="bar-row"><div class="bar-label">Science</div><div class="bar-track"><div class="bar-fill teal-fill" style="width:75%"></div></div><div class="bar-val">฿240K</div></div>
+              <div class="bar-row"><div class="bar-label">English</div><div class="bar-track"><div class="bar-fill green-fill" style="width:55%"></div></div><div class="bar-val">฿176K</div></div>
+              <div class="bar-row"><div class="bar-label">Thai</div><div class="bar-track"><div class="bar-fill amber-fill" style="width:33%"></div></div><div class="bar-val">฿106K</div></div>
+            </div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">Package Mix</div>
+            <div class="bar-container">
+              <div class="bar-row"><div class="bar-label">Premium</div><div class="bar-track"><div class="bar-fill purple-fill" style="width:45%"></div></div><div class="bar-val">42%</div></div>
+              <div class="bar-row"><div class="bar-label">Standard</div><div class="bar-track"><div class="bar-fill blue-fill" style="width:38%"></div></div><div class="bar-val">36%</div></div>
+              <div class="bar-row"><div class="bar-label">Basic</div><div class="bar-track"><div class="bar-fill teal-fill" style="width:22%"></div></div><div class="bar-val">22%</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-box" style="margin-bottom:0">
+          <div class="chart-title">รายละเอียดสินค้า</div>
+          <table class="mini-table">
+            <thead><tr><th>BU</th><th>คอร์ส</th><th>Package</th><th>ยอดขาย</th><th>ปิด</th><th>Basket Size</th><th>Lead Time</th></tr></thead>
+            <tbody>
+              <tr><td>Math</td><td>ม.ปลาย</td><td>Premium</td><td>฿180K</td><td>45</td><td>฿4,000</td><td>10 วัน</td></tr>
+              <tr><td>Science</td><td>ม.ต้น</td><td>Standard</td><td>฿120K</td><td>40</td><td>฿3,000</td><td>14 วัน</td></tr>
+              <tr><td>English</td><td>ป.ปลาย</td><td>Basic</td><td>฿88K</td><td>55</td><td>฿1,600</td><td>8 วัน</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGE 5: ค้างชำระ -->
+      <div class="page" id="page-5">
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-label">ยอดค้างชำระรวม</div><div class="kpi-value" style="color:#A32D2D">฿248K</div><div class="kpi-delta neg">18 รายการ</div></div>
+          <div class="kpi-card"><div class="kpi-label">เกิน Due Date</div><div class="kpi-value" style="color:#A32D2D">5</div><div class="kpi-delta neg">รายการ</div></div>
+          <div class="kpi-card"><div class="kpi-label">Due ใน 7 วัน</div><div class="kpi-value" style="color:#854F0B">8</div><div class="kpi-delta warn">รายการ</div></div>
+          <div class="kpi-card"><div class="kpi-label">รอชำระปกติ</div><div class="kpi-value">5</div><div class="kpi-delta neu">รายการ</div></div>
+        </div>
+        <div class="chart-box" style="margin-bottom:8px">
+          <div class="chart-title">รายการค้างชำระ</div>
+          <table class="mini-table">
+            <thead><tr><th>Order</th><th>ลูกค้า</th><th>เซลล์</th><th>Type</th><th>ยอดรวม</th><th>จ่ายแล้ว</th><th>ค้าง</th><th>งวดที่</th><th>Due Date</th><th>สถานะ</th></tr></thead>
+            <tbody>
+              <tr><td>ORD-001</td><td>คุณ A</td><td>นาย X</td><td><span class="badge badge-info">New</span></td><td>฿30K</td><td>฿10K</td><td>฿20K</td><td>2/3</td><td>15 พ.ค.</td><td><span class="badge badge-warn">รอชำระ</span></td></tr>
+              <tr><td>ORD-002</td><td>คุณ B</td><td>นาง Y</td><td><span class="badge badge-success">Con</span></td><td>฿15K</td><td>฿0K</td><td>฿15K</td><td>1/1</td><td>10 พ.ค.</td><td><span class="badge badge-danger">เลย Due</span></td></tr>
+              <tr><td>ORD-003</td><td>คุณ C</td><td>นาย Z</td><td><span class="badge badge-info">New</span></td><td>฿24K</td><td>฿12K</td><td>฿12K</td><td>2/2</td><td>20 พ.ค.</td><td><span class="badge badge-warn">รอชำระ</span></td></tr>
+              <tr><td>ORD-004</td><td>คุณ D</td><td>นาย X</td><td><span class="badge badge-success">Con</span></td><td>฿18K</td><td>฿0K</td><td>฿18K</td><td>1/1</td><td>5 พ.ค.</td><td><span class="badge badge-danger">เลย Due</span></td></tr>
+              <tr><td>ORD-005</td><td>คุณ E</td><td>นาง W</td><td><span class="badge badge-info">New</span></td><td>฿42K</td><td>฿21K</td><td>฿21K</td><td>2/3</td><td>18 พ.ค.</td><td><span class="badge badge-warn">รอชำระ</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGE 6: Target Monthly -->
+      <div class="page" id="page-6">
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-label">% Achievement เฉลี่ย</div><div class="kpi-value">87%</div><div class="kpi-delta pos">ใน 12 เดือนล่าสุด</div></div>
+          <div class="kpi-card"><div class="kpi-label">เดือนที่ดีสุด</div><div class="kpi-value">ธ.ค.</div><div class="kpi-delta pos">112% of target</div></div>
+          <div class="kpi-card"><div class="kpi-label">เดือนที่แย่สุด</div><div class="kpi-value">ก.ค.</div><div class="kpi-delta neg">68% of target</div></div>
+          <div class="kpi-card"><div class="kpi-label">เดือนปัจจุบัน</div><div class="kpi-value">84%</div><div class="kpi-delta neu">8 วันที่เหลือ</div></div>
+        </div>
+        <div class="chart-box" style="margin-bottom:8px">
+          <div class="chart-title">Actual vs Target รายเดือน</div>
+          <table class="mini-table">
+            <thead><tr><th>เดือน</th><th>Target</th><th>Actual</th><th>%Ach</th><th>Gap</th><th>สถานะ</th></tr></thead>
+            <tbody>
+              <tr><td>ม.ค.</td><td>฿1.0M</td><td>฿920K</td><td>92%</td><td>-฿80K</td><td><span class="badge badge-success">ใกล้เป้า</span></td></tr>
+              <tr><td>ก.พ.</td><td>฿1.0M</td><td>฿780K</td><td>78%</td><td>-฿220K</td><td><span class="badge badge-danger">ต่ำกว่าเป้า</span></td></tr>
+              <tr><td>มี.ค.</td><td>฿1.0M</td><td>฿1.05M</td><td>105%</td><td>+฿50K</td><td><span class="badge badge-success">เกินเป้า</span></td></tr>
+              <tr><td>เม.ย.</td><td>฿1.0M</td><td>฿842K</td><td>84%</td><td>-฿158K</td><td><span class="badge badge-warn">กำลังดำเนินการ</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">% Achievement Trend (12 เดือน)</div>
+          <div style="display:flex;align-items:flex-end;gap:3px;height:80px">
+            <svg width="100%" height="80" viewBox="0 0 460 80" preserveAspectRatio="none">
+              <line x1="0" y1="25" x2="460" y2="25" stroke="#E24B4A" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.6"/>
+              <rect x="2" y="32" width="32" height="44" rx="2" fill="#378ADD" opacity="0.8"/>
+              <rect x="40" y="22" width="32" height="54" rx="2" fill="#378ADD" opacity="0.8"/>
+              <rect x="78" y="14" width="32" height="62" rx="2" fill="#3B6D11" opacity="0.85"/>
+              <rect x="116" y="38" width="32" height="38" rx="2" fill="#EF9F27" opacity="0.8"/>
+              <rect x="154" y="28" width="32" height="48" rx="2" fill="#378ADD" opacity="0.8"/>
+              <rect x="192" y="52" width="32" height="24" rx="2" fill="#E24B4A" opacity="0.75"/>
+              <rect x="230" y="36" width="32" height="40" rx="2" fill="#378ADD" opacity="0.8"/>
+              <rect x="268" y="24" width="32" height="52" rx="2" fill="#378ADD" opacity="0.8"/>
+              <rect x="306" y="18" width="32" height="58" rx="2" fill="#3B6D11" opacity="0.85"/>
+              <rect x="344" y="10" width="32" height="66" rx="2" fill="#3B6D11" opacity="0.85"/>
+              <rect x="382" y="30" width="32" height="46" rx="2" fill="#378ADD" opacity="0.8"/>
+              <rect x="420" y="38" width="32" height="38" rx="2" fill="#EF9F27" opacity="0.75"/>
+              <text x="230" y="22" font-size="7" fill="#E24B4A" text-anchor="middle">100% target</text>
+            </svg>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:2px">
+            <span style="font-size:8px;color:var(--color-text-secondary)">พ.ค.24</span>
+            <span style="font-size:8px;color:var(--color-text-secondary)">เม.ย.25</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE 7: ตารางย้อนหลัง -->
+      <div class="page" id="page-7">
+        <div class="chart-box">
+          <div class="chart-title">Matrix: ตัวเลขทุก Measure รายเดือนรายปี</div>
+          <table class="mini-table">
+            <thead><tr><th>ปี</th><th>เดือน</th><th>Actual Sales</th><th>Count Closed</th><th>Basket Size</th><th>Lead</th><th>Serious</th><th>Qualified</th><th>Ads Spent</th><th>ROAS</th></tr></thead>
+            <tbody>
+              <tr><td>2025</td><td>เม.ย.</td><td>฿842K</td><td>42</td><td>฿20K</td><td>355</td><td>142</td><td>85</td><td>฿88K</td><td>9.6x</td></tr>
+              <tr><td>2025</td><td>มี.ค.</td><td>฿1.05M</td><td>52</td><td>฿20.2K</td><td>420</td><td>168</td><td>101</td><td>฿95K</td><td>11.1x</td></tr>
+              <tr><td>2025</td><td>ก.พ.</td><td>฿780K</td><td>39</td><td>฿20K</td><td>280</td><td>112</td><td>67</td><td>฿75K</td><td>10.4x</td></tr>
+              <tr><td>2025</td><td>ม.ค.</td><td>฿920K</td><td>46</td><td>฿20K</td><td>380</td><td>152</td><td>91</td><td>฿90K</td><td>10.2x</td></tr>
+              <tr><td>2024</td><td>ธ.ค.</td><td>฿1.12M</td><td>56</td><td>฿20K</td><td>480</td><td>192</td><td>115</td><td>฿100K</td><td>11.2x</td></tr>
+              <tr><td>2024</td><td>พ.ย.</td><td>฿950K</td><td>47</td><td>฿20.2K</td><td>390</td><td>156</td><td>94</td><td>฿92K</td><td>10.3x</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGE 8: Compare 2 Range -->
+      <div class="page" id="page-8">
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div class="chart-box" style="flex:1">
+            <div class="kpi-label">Period 1</div>
+            <div style="display:flex;gap:6px;align-items:center;margin-top:4px">
+              <input type="text" value="1 ม.ค. 2025" style="font-size:11px;padding:4px 8px;width:110px" readonly>
+              <span style="font-size:11px">ถึง</span>
+              <input type="text" value="15 ม.ค. 2025" style="font-size:11px;padding:4px 8px;width:110px" readonly>
+            </div>
+          </div>
+          <div class="chart-box" style="flex:1">
+            <div class="kpi-label">Period 2</div>
+            <div style="display:flex;gap:6px;align-items:center;margin-top:4px">
+              <input type="text" value="1 ก.พ. 2025" style="font-size:11px;padding:4px 8px;width:110px" readonly>
+              <span style="font-size:11px">ถึง</span>
+              <input type="text" value="15 ก.พ. 2025" style="font-size:11px;padding:4px 8px;width:110px" readonly>
+            </div>
+          </div>
+        </div>
+        <div class="chart-row chart-row-2">
+          <div class="chart-box">
+            <div class="chart-title">เปรียบเทียบ Measures</div>
+            <table class="mini-table">
+              <thead><tr><th>Measure</th><th>Period 1</th><th>Period 2</th><th>+/-</th><th>%</th></tr></thead>
+              <tbody>
+                <tr><td>ยอดขาย</td><td>฿500K</td><td>฿650K</td><td style="color:#3B6D11">+฿150K</td><td style="color:#3B6D11">+30%</td></tr>
+                <tr><td>ปิดการขาย</td><td>50</td><td>65</td><td style="color:#3B6D11">+15</td><td style="color:#3B6D11">+30%</td></tr>
+                <tr><td>Lead</td><td>200</td><td>240</td><td style="color:#3B6D11">+40</td><td style="color:#3B6D11">+20%</td></tr>
+                <tr><td>Basket Size</td><td>฿10K</td><td>฿10K</td><td>฿0</td><td>0%</td></tr>
+                <tr><td>ROAS</td><td>9.2x</td><td>9.8x</td><td style="color:#3B6D11">+0.6x</td><td style="color:#3B6D11">+7%</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">ยอดขาย Period 1 vs 2</div>
+            <div style="display:flex;gap:12px;align-items:flex-end;height:100px;margin-top:8px">
+              <div style="flex:1;text-align:center">
+                <div style="background:#B5D4F4;border-radius:4px 4px 0 0;height:65px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px"><span style="font-size:10px;font-weight:500;color:#0C447C">฿500K</span></div>
+                <div style="font-size:9px;color:var(--color-text-secondary);margin-top:3px">Period 1</div>
+              </div>
+              <div style="flex:1;text-align:center">
+                <div style="background:#378ADD;border-radius:4px 4px 0 0;height:85px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px"><span style="font-size:10px;font-weight:500;color:#042C53">฿650K</span></div>
+                <div style="font-size:9px;color:var(--color-text-secondary);margin-top:3px">Period 2</div>
+              </div>
+              <div style="flex:1;text-align:center">
+                <div style="background:#C0DD97;border-radius:4px 4px 0 0;height:26px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px"><span style="font-size:10px;font-weight:500;color:#27500A">+฿150K</span></div>
+                <div style="font-size:9px;color:#3B6D11;margin-top:3px">+30%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE 9: Avg 12 Month -->
+      <div class="page" id="page-9">
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-label">เดือนนี้</div><div class="kpi-value">฿842K</div><div class="kpi-delta pos">vs เฉลี่ย</div></div>
+          <div class="kpi-card"><div class="kpi-label">Avg 12 เดือน</div><div class="kpi-value">฿780K</div><div class="kpi-delta neu">ค่าเฉลี่ย</div></div>
+          <div class="kpi-card"><div class="kpi-label">ส่วนต่าง</div><div class="kpi-value" style="color:#3B6D11">+฿62K</div><div class="kpi-delta pos">+8% vs Avg</div></div>
+          <div class="kpi-card"><div class="kpi-label">สถานะ</div><div class="kpi-value">ดีกว่าปกติ</div><div class="kpi-delta pos">เหนือเฉลี่ย</div></div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">เปรียบเทียบทุก Measure vs Avg 12 เดือน</div>
+          <table class="mini-table">
+            <thead><tr><th>Measure</th><th>ค่าปัจจุบัน</th><th>Avg 12M</th><th>vs Avg</th><th>%Change</th></tr></thead>
+            <tbody>
+              <tr><td>ยอดขาย</td><td>฿842K</td><td>฿780K</td><td style="color:#3B6D11">+฿62K</td><td style="color:#3B6D11">+8%</td></tr>
+              <tr><td>ปิดการขาย</td><td>42</td><td>39</td><td style="color:#3B6D11">+3</td><td style="color:#3B6D11">+8%</td></tr>
+              <tr><td>Lead</td><td>355</td><td>320</td><td style="color:#3B6D11">+35</td><td style="color:#3B6D11">+11%</td></tr>
+              <tr><td>Ads Spent</td><td>฿88K</td><td>฿85K</td><td style="color:#A32D2D">+฿3K</td><td style="color:#A32D2D">+4%</td></tr>
+              <tr><td>ROAS</td><td>9.6x</td><td>9.2x</td><td style="color:#3B6D11">+0.4x</td><td style="color:#3B6D11">+4%</td></tr>
+              <tr><td>CPL</td><td>฿95</td><td>฿103</td><td style="color:#3B6D11">-฿8</td><td style="color:#3B6D11">-8%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGE 10: Last Month -->
+      <div class="page" id="page-10">
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-label">เดือนนี้ (เม.ย.)</div><div class="kpi-value">฿842K</div><div class="kpi-delta neu">ปัจจุบัน</div></div>
+          <div class="kpi-card"><div class="kpi-label">เดือนที่แล้ว (มี.ค.)</div><div class="kpi-value">฿1.05M</div><div class="kpi-delta neu">ช่วงเดียวกัน</div></div>
+          <div class="kpi-card"><div class="kpi-label">ส่วนต่าง MoM</div><div class="kpi-value" style="color:#A32D2D">-฿208K</div><div class="kpi-delta neg">-19.8%</div></div>
+          <div class="kpi-card"><div class="kpi-label">Lead MoM</div><div class="kpi-value" style="color:#A32D2D">-65</div><div class="kpi-delta neg">355 vs 420</div></div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Month-over-Month Comparison</div>
+          <table class="mini-table">
+            <thead><tr><th>Measure</th><th>เม.ย. 2025</th><th>มี.ค. 2025</th><th>MoM Diff</th><th>MoM %</th></tr></thead>
+            <tbody>
+              <tr><td>ยอดขาย</td><td>฿842K</td><td>฿1.05M</td><td style="color:#A32D2D">-฿208K</td><td style="color:#A32D2D">-19.8%</td></tr>
+              <tr><td>ปิดการขาย</td><td>42</td><td>52</td><td style="color:#A32D2D">-10</td><td style="color:#A32D2D">-19.2%</td></tr>
+              <tr><td>Lead</td><td>355</td><td>420</td><td style="color:#A32D2D">-65</td><td style="color:#A32D2D">-15.5%</td></tr>
+              <tr><td>Ads Spent</td><td>฿88K</td><td>฿95K</td><td style="color:#3B6D11">-฿7K</td><td style="color:#3B6D11">-7.4%</td></tr>
+              <tr><td>ROAS</td><td>9.6x</td><td>11.1x</td><td style="color:#A32D2D">-1.5x</td><td style="color:#A32D2D">-13.5%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGE 11: Last Year -->
+      <div class="page" id="page-11">
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-label">เม.ย. 2025</div><div class="kpi-value">฿842K</div><div class="kpi-delta neu">ปีนี้</div></div>
+          <div class="kpi-card"><div class="kpi-label">เม.ย. 2024</div><div class="kpi-value">฿695K</div><div class="kpi-delta neu">ปีที่แล้ว</div></div>
+          <div class="kpi-card"><div class="kpi-label">YoY Growth</div><div class="kpi-value" style="color:#3B6D11">+฿147K</div><div class="kpi-delta pos">+21.2%</div></div>
+          <div class="kpi-card"><div class="kpi-label">Lead YoY</div><td class="kpi-value" style="color:#3B6D11">+82</div><div class="kpi-delta pos">355 vs 273</div></div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Year-over-Year Comparison (ช่วงเดียวกัน)</div>
+          <table class="mini-table">
+            <thead><tr><th>Measure</th><th>เม.ย. 2025</th><th>เม.ย. 2024</th><th>YoY Diff</th><th>YoY %</th></tr></thead>
+            <tbody>
+              <tr><td>ยอดขาย</td><td>฿842K</td><td>฿695K</td><td style="color:#3B6D11">+฿147K</td><td style="color:#3B6D11">+21.2%</td></tr>
+              <tr><td>ปิดการขาย</td><td>42</td><td>35</td><td style="color:#3B6D11">+7</td><td style="color:#3B6D11">+20%</td></tr>
+              <tr><td>Lead</td><td>355</td><td>273</td><td style="color:#3B6D11">+82</td><td style="color:#3B6D11">+30%</td></tr>
+              <tr><td>Ads Spent</td><td>฿88K</td><td>฿72K</td><td style="color:#A32D2D">+฿16K</td><td style="color:#A32D2D">+22.2%</td></tr>
+              <tr><td>ROAS</td><td>9.6x</td><td>9.7x</td><td>-0.1x</td><td>-1%</td></tr>
+              <tr><td>Basket Size</td><td>฿20K</td><td>฿19.9K</td><td style="color:#3B6D11">+฿100</td><td style="color:#3B6D11">+0.5%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGE 12: แชท Facebook -->
+      <div class="page" id="page-12">
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-label">ข้อความทั้งหมด</div><div class="kpi-value">1,840</div><div class="kpi-delta neu">เดือนนี้</div></div>
+          <div class="kpi-card"><div class="kpi-label">ตอบใน 5 นาที</div><div class="kpi-value" style="color:#3B6D11">78%</div><div class="kpi-delta pos">เป้า 80%</div></div>
+          <div class="kpi-card"><div class="kpi-label">ตอบช้า >5 นาที</div><div class="kpi-value" style="color:#A32D2D">404</div><div class="kpi-delta neg">22% ของทั้งหมด</div></div>
+          <div class="kpi-card"><div class="kpi-label">Avg Response Time</div><div class="kpi-value">3.2 นาที</div><div class="kpi-delta pos">ดีกว่าเป้า</div></div>
+        </div>
+        <div class="chart-row chart-row-2">
+          <div class="chart-box">
+            <div class="chart-title">ข้อความแต่ละชั่วโมง (Peak Hours)</div>
+            <div style="display:flex;align-items:flex-end;gap:3px;height:80px">
+              <svg width="100%" height="80" viewBox="0 0 360 80" preserveAspectRatio="none">
+                <rect x="0" y="72" width="14" height="6" rx="1" fill="#B5D4F4"/>
+                <rect x="16" y="68" width="14" height="10" rx="1" fill="#B5D4F4"/>
+                <rect x="32" y="60" width="14" height="18" rx="1" fill="#378ADD"/>
+                <rect x="48" y="50" width="14" height="28" rx="1" fill="#378ADD"/>
+                <rect x="64" y="40" width="14" height="38" rx="1" fill="#378ADD"/>
+                <rect x="80" y="30" width="14" height="48" rx="1" fill="#185FA5"/>
+                <rect x="96" y="25" width="14" height="53" rx="1" fill="#185FA5"/>
+                <rect x="112" y="22" width="14" height="56" rx="1" fill="#185FA5"/>
+                <rect x="128" y="20" width="14" height="58" rx="1" fill="#0C447C"/>
+                <rect x="144" y="25" width="14" height="53" rx="1" fill="#185FA5"/>
+                <rect x="160" y="28" width="14" height="50" rx="1" fill="#185FA5"/>
+                <rect x="176" y="22" width="14" height="56" rx="1" fill="#0C447C"/>
+                <rect x="192" y="32" width="14" height="46" rx="1" fill="#378ADD"/>
+                <rect x="208" y="38" width="14" height="40" rx="1" fill="#378ADD"/>
+                <rect x="224" y="45" width="14" height="33" rx="1" fill="#378ADD"/>
+                <rect x="240" y="55" width="14" height="23" rx="1" fill="#B5D4F4"/>
+                <rect x="256" y="62" width="14" height="16" rx="1" fill="#B5D4F4"/>
+                <rect x="272" y="68" width="14" height="10" rx="1" fill="#B5D4F4"/>
+                <rect x="288" y="72" width="14" height="6" rx="1" fill="#B5D4F4"/>
+                <rect x="304" y="66" width="14" height="12" rx="1" fill="#B5D4F4"/>
+                <rect x="320" y="70" width="14" height="8" rx="1" fill="#B5D4F4"/>
+                <rect x="336" y="74" width="14" height="4" rx="1" fill="#B5D4F4"/>
+              </svg>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:2px">
+              <span style="font-size:8px;color:var(--color-text-secondary)">00:00</span>
+              <span style="font-size:8px;color:var(--color-text-secondary)">12:00</span>
+              <span style="font-size:8px;color:var(--color-text-secondary)">23:59</span>
+            </div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">% ตอบใน 5 นาที รายวัน</div>
+            <div class="bar-container">
+              <div class="bar-row"><div class="bar-label">จันทร์</div><div class="bar-track"><div class="bar-fill green-fill" style="width:82%"></div></div><div class="bar-val">82%</div></div>
+              <div class="bar-row"><div class="bar-label">อังคาร</div><div class="bar-track"><div class="bar-fill green-fill" style="width:80%"></div></div><div class="bar-val">80%</div></div>
+              <div class="bar-row"><div class="bar-label">พุธ</div><div class="bar-track"><div class="bar-fill amber-fill" style="width:75%"></div></div><div class="bar-val">75%</div></div>
+              <div class="bar-row"><div class="bar-label">พฤหัส</div><div class="bar-track"><div class="bar-fill green-fill" style="width:81%"></div></div><div class="bar-val">81%</div></div>
+              <div class="bar-row"><div class="bar-label">ศุกร์</div><div class="bar-track"><div class="bar-fill amber-fill" style="width:72%"></div></div><div class="bar-val">72%</div></div>
+              <div class="bar-row"><div class="bar-label">เสาร์</div><div class="bar-track"><div class="bar-fill red-fill" style="width:65%"></div></div><div class="bar-val">65%</div></div>
+              <div class="bar-row"><div class="bar-label">อาทิตย์</div><div class="bar-track"><div class="bar-fill amber-fill" style="width:78%"></div></div><div class="bar-val">78%</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE 13: Leaderboard -->
+      <div class="page" id="page-13">
+        <div class="chart-row chart-row-2">
+          <div class="chart-box">
+            <div class="chart-title">Top Sales (ยอดขาย)</div>
+            <div class="leaderboard-row"><div class="rank">1</div><div class="avatar av-blue">สว</div><div class="lb-name">สวรรณา ว.</div><div class="lb-val">฿182K</div></div>
+            <div class="leaderboard-row"><div class="rank">2</div><div class="avatar av-teal">กน</div><div class="lb-name">กนกวรรณ พ.</div><div class="lb-val">฿164K</div></div>
+            <div class="leaderboard-row"><div class="rank">3</div><div class="avatar av-amber">นพ</div><div class="lb-name">นพดล ร.</div><div class="lb-val">฿148K</div></div>
+            <div class="leaderboard-row"><div class="rank">4</div><div class="avatar av-purple">ชน</div><div class="lb-name">ชนาภา ม.</div><div class="lb-val">฿135K</div></div>
+            <div class="leaderboard-row"><div class="rank">5</div><div class="avatar av-coral">วร</div><div class="lb-name">วรินทร ส.</div><div class="lb-val">฿122K</div></div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">Top Closer (จำนวนปิด)</div>
+            <div class="leaderboard-row"><div class="rank">1</div><div class="avatar av-teal">กน</div><div class="lb-name">กนกวรรณ พ.</div><div class="lb-val">12 ราย</div></div>
+            <div class="leaderboard-row"><div class="rank">2</div><div class="avatar av-blue">สว</div><div class="lb-name">สวรรณา ว.</div><div class="lb-val">10 ราย</div></div>
+            <div class="leaderboard-row"><div class="rank">3</div><div class="avatar av-coral">วร</div><div class="lb-name">วรินทร ส.</div><div class="lb-val">9 ราย</div></div>
+            <div class="leaderboard-row"><div class="rank">4</div><div class="avatar av-amber">นพ</div><div class="lb-name">นพดล ร.</div><div class="lb-val">7 ราย</div></div>
+            <div class="leaderboard-row"><div class="rank">5</div><div class="avatar av-purple">ชน</div><div class="lb-name">ชนาภา ม.</div><div class="lb-val">4 ราย</div></div>
+          </div>
+        </div>
+        <div class="chart-row chart-row-2" style="margin-top:8px">
+          <div class="chart-box">
+            <div class="chart-title">Top Converter (% ปิดจาก Lead)</div>
+            <div class="leaderboard-row"><div class="rank">1</div><div class="avatar av-purple">ชน</div><div class="lb-name">ชนาภา ม.</div><div class="lb-val" style="color:#3B6D11">18.2%</div></div>
+            <div class="leaderboard-row"><div class="rank">2</div><div class="avatar av-teal">กน</div><div class="lb-name">กนกวรรณ พ.</div><div class="lb-val" style="color:#3B6D11">15.4%</div></div>
+            <div class="leaderboard-row"><div class="rank">3</div><div class="avatar av-blue">สว</div><div class="lb-name">สวรรณา ว.</div><div class="lb-val" style="color:#3B6D11">12.8%</div></div>
+            <div class="leaderboard-row"><div class="rank">4</div><div class="avatar av-coral">วร</div><div class="lb-name">วรินทร ส.</div><div class="lb-val" style="color:#854F0B">9.5%</div></div>
+            <div class="leaderboard-row"><div class="rank">5</div><div class="avatar av-amber">นพ</div><div class="lb-name">นพดล ร.</div><div class="lb-val" style="color:#854F0B">8.1%</div></div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">Individual Performance</div>
+            <table class="mini-table">
+              <thead><tr><th>ชื่อ</th><th>ยอด</th><th>ปิด</th><th>%ปิด</th><th>Basket</th></tr></thead>
+              <tbody>
+                <tr><td>สวรรณา</td><td>฿182K</td><td>10</td><td>12.8%</td><td>฿18.2K</td></tr>
+                <tr><td>กนกวรรณ</td><td>฿164K</td><td>12</td><td>15.4%</td><td>฿13.7K</td></tr>
+                <tr><td>นพดล</td><td>฿148K</td><td>7</td><td>8.1%</td><td>฿21.1K</td></tr>
+                <tr><td>ชนาภา</td><td>฿135K</td><td>4</td><td>18.2%</td><td>฿33.8K</td></tr>
+                <tr><td>วรินทร</td><td>฿122K</td><td>9</td><td>9.5%</td><td>฿13.6K</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE 14: Transaction Lead -->
+      <div class="page" id="page-14">
+        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+          <select style="font-size:11px;padding:4px 8px"><option>ทุก Funnel Stage</option><option>F3 พิจารณา</option><option>F4 ตัดสินใจ</option></select>
+          <select style="font-size:11px;padding:4px 8px"><option>ทุก Lead Quality</option><option>Qualified</option><option>Serious+Qualified</option></select>
+          <select style="font-size:11px;padding:4px 8px"><option>ทุก BU</option><option>Math</option><option>Science</option></select>
+          <input type="text" placeholder="ค้นหาชื่อ..." style="font-size:11px;padding:4px 8px;width:130px">
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">รายการ Lead ทั้งหมด</div>
+          <table class="mini-table">
+            <thead><tr><th>Lead ID</th><th>ชื่อ Social</th><th>เบอร์</th><th>Funnel</th><th>Serious</th><th>Qualified</th><th>Temperature</th><th>สินค้าที่สนใจ</th><th>Next Follow</th></tr></thead>
+            <tbody>
+              <tr><td>L-001</td><td>คุณ A</td><td>08X-XXXX</td><td><span class="badge badge-info">F4</span></td><td><span class="badge badge-success">ใช่</span></td><td><span class="badge badge-success">ใช่</span></td><td><span class="badge" style="background:#FAECE7;color:#993C1D">Warm</span></td><td>Math ม.ปลาย</td><td>25 เม.ย.</td></tr>
+              <tr><td>L-002</td><td>คุณ B</td><td>09X-XXXX</td><td><span class="badge badge-warn">F3</span></td><td><span class="badge badge-success">ใช่</span></td><td><span class="badge badge-warn">ยังประเมิน</span></td><td><span class="badge" style="background:#E6F1FB;color:#185FA5">Cold</span></td><td>Science ม.ต้น</td><td>26 เม.ย.</td></tr>
+              <tr><td>L-003</td><td>คุณ C</td><td>06X-XXXX</td><td><span class="badge badge-info">F4</span></td><td><span class="badge badge-success">ใช่</span></td><td><span class="badge badge-success">ใช่</span></td><td><span class="badge" style="background:#FAECE7;color:#993C1D">Warm</span></td><td>English ป.ปลาย</td><td>27 เม.ย.</td></tr>
+              <tr><td>L-004</td><td>คุณ D</td><td>08X-XXXX</td><td><span class="badge" style="background:#EAF3DE;color:#27500A">F2</span></td><td><span class="badge badge-danger">ไม่ใช่</span></td><td><span class="badge badge-danger">ไม่ใช่</span></td><td><span class="badge" style="background:#E6F1FB;color:#185FA5">Cold</span></td><td>Math ม.ปลาย</td><td>28 เม.ย.</td></tr>
+              <tr><td>L-005</td><td>คุณ E</td><td>09X-XXXX</td><td><span class="badge badge-info">F4</span></td><td><span class="badge badge-success">ใช่</span></td><td><span class="badge badge-success">ใช่</span></td><td><span class="badge" style="background:#FAECE7;color:#993C1D">Warm</span></td><td>Thai ม.ต้น</td><td>29 เม.ย.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGE 15: Transaction Order -->
+      <div class="page" id="page-15">
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <select style="font-size:11px;padding:4px 8px"><option>ทุก Status</option><option>Paid</option><option>Pending</option></select>
+          <select style="font-size:11px;padding:4px 8px"><option>ทุก Order Type</option><option>New</option><option>Con</option></select>
+          <select style="font-size:11px;padding:4px 8px"><option>ทุก BU</option><option>Math</option><option>English</option></select>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">รายการ Order ทั้งหมด</div>
+          <table class="mini-table">
+            <thead><tr><th>Order Code</th><th>Type</th><th>สินค้า</th><th>Package</th><th>เซลล์</th><th>ยอดรวม</th><th>จ่ายแล้ว</th><th>Status</th><th>วันปิด</th><th>Days to Close</th></tr></thead>
+            <tbody>
+              <tr><td>ORD-101</td><td><span class="badge badge-info">New</span></td><td>Math ม.ปลาย</td><td>Premium</td><td>สวรรณา</td><td>฿25K</td><td>฿25K</td><td><span class="badge badge-success">Paid</span></td><td>22 เม.ย.</td><td>8 วัน</td></tr>
+              <tr><td>ORD-102</td><td><span class="badge badge-success">Con</span></td><td>Science ม.ต้น</td><td>Standard</td><td>กนกวรรณ</td><td>฿18K</td><td>฿12K</td><td><span class="badge badge-warn">Pending</span></td><td>21 เม.ย.</td><td>12 วัน</td></tr>
+              <tr><td>ORD-103</td><td><span class="badge badge-info">New</span></td><td>English ป.ปลาย</td><td>Basic</td><td>นพดล</td><td>฿12K</td><td>฿12K</td><td><span class="badge badge-success">Paid</span></td><td>20 เม.ย.</td><td>5 วัน</td></tr>
+              <tr><td>ORD-104</td><td><span class="badge badge-info">New</span></td><td>Math ม.ปลาย</td><td>Premium</td><td>ชนาภา</td><td>฿30K</td><td>฿15K</td><td><span class="badge badge-warn">Pending</span></td><td>19 เม.ย.</td><td>15 วัน</td></tr>
+              <tr><td>ORD-105</td><td><span class="badge badge-success">Con</span></td><td>Thai ม.ต้น</td><td>Standard</td><td>วรินทร</td><td>฿15K</td><td>฿15K</td><td><span class="badge badge-success">Paid</span></td><td>18 เม.ย.</td><td>6 วัน</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGE 16: สารบัญสูตร -->
+      <div class="page" id="page-16">
+        <div class="chart-row chart-row-2">
+          <div class="chart-box">
+            <div class="chart-title">Sales Measures</div>
+            <table class="mini-table">
+              <thead><tr><th>Measure</th><th>คำอธิบาย</th><th>สูตร DAX</th></tr></thead>
+              <tbody>
+                <tr><td>total_sales_all</td><td>ยอดขายรวม</td><td style="font-family:var(--font-mono);font-size:9px">SUM(Fact_Order[total_order_amt])</td></tr>
+                <tr><td>actual_sales_all</td><td>ยอดขายที่เข้าจริง</td><td style="font-family:var(--font-mono);font-size:9px">CALCULATE(SUM(...), status="Paid")</td></tr>
+                <tr><td>count_closed_all</td><td>จำนวนปิดการขาย</td><td style="font-family:var(--font-mono);font-size:9px">DISTINCTCOUNT(order_code)</td></tr>
+                <tr><td>basket_size_all</td><td>ยอดเฉลี่ย/order</td><td style="font-family:var(--font-mono);font-size:9px">DIVIDE(total_sales, count_closed)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">Lead Measures</div>
+            <table class="mini-table">
+              <thead><tr><th>Measure</th><th>คำอธิบาย</th><th>สูตร DAX</th></tr></thead>
+              <tbody>
+                <tr><td>total_lead_count</td><td>คนทักทั้งหมด</td><td style="font-family:var(--font-mono);font-size:9px">DISTINCTCOUNT(lead_id)</td></tr>
+                <tr><td>serious_lead_count</td><td>คนทักจริงจัง</td><td style="font-family:var(--font-mono);font-size:9px">CALCULATE(..., is_serious="Yes")</td></tr>
+                <tr><td>qualified_lead_count</td><td>คนทักคุณภาพ</td><td style="font-family:var(--font-mono);font-size:9px">CALCULATE(..., is_qualified="Yes")</td></tr>
+                <tr><td>warm_lead_count</td><td>Warm Lead</td><td style="font-family:var(--font-mono);font-size:9px">CALCULATE(..., temperature="Warm")</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="chart-row chart-row-2" style="margin-top:8px">
+          <div class="chart-box">
+            <div class="chart-title">Marketing Measures</div>
+            <table class="mini-table">
+              <thead><tr><th>Measure</th><th>คำอธิบาย</th><th>สูตร</th></tr></thead>
+              <tbody>
+                <tr><td>ads_spent</td><td>ค่าโฆษณา</td><td style="font-family:var(--font-mono);font-size:9px">SUM(ads_spent)</td></tr>
+                <tr><td>cost_per_lead</td><td>CPL</td><td style="font-family:var(--font-mono);font-size:9px">DIVIDE(ads_spent, lead_count)</td></tr>
+                <tr><td>facebook_roas</td><td>ROAS</td><td style="font-family:var(--font-mono);font-size:9px">DIVIDE(actual_sales_new, ads_spent)</td></tr>
+                <tr><td>pct_mc</td><td>%MC</td><td style="font-family:var(--font-mono);font-size:9px">DIVIDE(ads_spent, actual_sales_new)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">Time Intelligence</div>
+            <table class="mini-table">
+              <thead><tr><th>Pattern</th><th>สูตร DAX</th></tr></thead>
+              <tbody>
+                <tr><td>Last Month</td><td style="font-family:var(--font-mono);font-size:9px">CALCULATE([M], DATEADD(Date,-1,MONTH))</td></tr>
+                <tr><td>Last Year</td><td style="font-family:var(--font-mono);font-size:9px">CALCULATE([M], SAMEPERIODLASTYEAR(Date))</td></tr>
+                <tr><td>Avg 12M</td><td style="font-family:var(--font-mono);font-size:9px">CALCULATE(AVERAGEX(Months,[M]), DATESINPERIOD(...))</td></tr>
+                <tr><td>YTD</td><td style="font-family:var(--font-mono);font-size:9px">CALCULATE([M], DATESYTD(Date))</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const titles = [
+  "หน้าที่ 1: Actual vs Target Current Month",
+  "หน้าที่ 2: Overall Performance",
+  "หน้าที่ 3: Lead Analysis",
+  "หน้าที่ 4: Marketing Performance",
+  "หน้าที่ 5: Product Performance",
+  "หน้าที่ 6: รายการค้างชำระ",
+  "หน้าที่ 7: Compare Target Monthly",
+  "หน้าที่ 8: ตารางข้อมูลย้อนหลัง",
+  "หน้าที่ 9: Compare 2 Range Date",
+  "หน้าที่ 10: Compare Avg 12 Month",
+  "หน้าที่ 11: Compare Last Month",
+  "หน้าที่ 12: Compare Last Year",
+  "หน้าที่ 13: การโต้ตอบแชท Facebook",
+  "หน้าที่ 14: Sales Leaderboard & Performance",
+  "หน้าที่ 15: Transaction Lead",
+  "หน้าที่ 16: Transaction Order",
+  "หน้าที่ 17: สารบัญสูตรการคำนวน"
+];
+function showPage(n, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('page-' + n).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('page-title').textContent = titles[n];
+}
+</script>
